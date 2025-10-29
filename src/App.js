@@ -1,24 +1,19 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Main from "./Main";
+import BoardRegist from "./component/BoardRegist";
+import BoardDetail from "./component/BoardDetail";
+import BoardEdit from "./component/BoardEdit";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+   return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Main />} /> {/* Main에 BoardList호출이 있음 */}
+        <Route path="/board/regist" element={<BoardRegist />} /> {/* 글 작성 */}
+        <Route path="/board/:id" element={<BoardDetail />} /> {/* 상세페이지 라우트 */}
+        <Route path="/board/edit/:id" element={<BoardEdit />} />
+      </Routes>
+    </Router>
   );
 }
 
