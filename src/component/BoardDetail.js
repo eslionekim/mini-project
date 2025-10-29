@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react"; //렌더링마다 특정 동작, 상태관리
-import { useParams, Link, useNavigate } from "react-router-dom"; //useParams: url에서 id같은 동적 파라미터
+import { useParams, Link, useNavigate } from "react-router-dom"; //useParams: url에서 id같은 동적 파라미터,useLocation:?page=3같은 쿼리스트링은 이걸로
 //Link : a같은 태그 눌렀을 때 다른 페이지로 이동할 수 있게 해주는 리액트 라우터 전용 링크
 import axios from "axios"; //http 
 
