@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"; //렌더링마다 특정 동작, 상태관리
+import React, { useCallback, useEffect, useRef, useState } from "react"; //렌더링마다 특정 동작, 상태관리
 import { useParams, Link, useNavigate } from "react-router-dom"; //useParams: url에서 id같은 동적 파라미터,useLocation:?page=3같은 쿼리스트링은 이걸로
 //Link : a같은 태그 눌렀을 때 다른 페이지로 이동할 수 있게 해주는 리액트 라우터 전용 링크
 import axios from "axios"; //http 
@@ -15,6 +15,7 @@ const BoardDetail = () => {
   const commentRef = useRef();
   const [editingContent, setEditingContent] = useState(""); // 댓글 수정 내용
   const [editingCommentId, setEditingCommentId] = useState(null); // 어떤 댓글을 수정 중인지
+  const editInputRef = useRef(); // 댓글 수정용 input에 dom 요소
 
   //게시물 자세히 보기(첫렌더링,id바뀔때마다) => 게시글 데이터가져옴
   useEffect(() => {
@@ -24,22 +25,19 @@ const BoardDetail = () => {
   }, [id]);
 
   //댓글 목록 불러오는 기능만
-  const fetchComments = ()=>{
+  const fetchComments = useCallback(()=>{
     axios.get(`http://localhost:8080/api/comments/${id}`)
       .then(res => setComments(res.data))
       .catch(err => console.error(err));
-  };
-  //언제 실행할지
+  },[id]);
+
+  //댓글 목록 불러오는 기능 언제 실행할지
   useEffect(() => {
     fetchComments();
   }, [id]);
 
-  //Hook은 다 if문 위에 있어야돼!!
-  //게시글 없으면 로딩중 뜸
-  if (!post) return <div>로딩 중...</div>;
-
   //게시글 삭제
-  const handleDelete = async () => { //삭제 버튼 
+  const handleDelete = useCallback(async () => { //삭제 버튼 
     const confirmDelete = window.confirm("진짜 삭제하시겠습니까?");
     if (!confirmDelete) return; // 아니오 선택 시 종료
 
@@ -51,10 +49,10 @@ const BoardDetail = () => {
       console.error(err);
       alert("삭제 중 오류가 발생했습니다.");
     }
-  };
+  },[id,navigate]);
 
   //댓글 작성
-  const handleCommentSubmit=async()=>{
+  const handleCommentSubmit=useCallback(async()=>{
     if(!newComment.trim()){
       alert("댓글을 입력해주세요.");
       commentRef.current.focus();
@@ -69,10 +67,10 @@ const BoardDetail = () => {
     } catch (err) {
       console.error(err);
     }
-  }
+  },[newComment,id,fetchComments]);
 
   //댓글 삭제
-  const handleDeleteComment =async(commentId)=>{
+  const handleDeleteComment =useCallback(async(commentId)=>{
     if(!window.confirm("댓글을 삭제하시겠습니까?")) return;
     try{
       await axios.delete(`http://localhost:8080/api/comments/${commentId}`);
@@ -80,17 +78,28 @@ const BoardDetail = () => {
     } catch (err) {
       console.error(err);
     }
-  };
+  },[fetchComments]);
 
   //댓글 수정 시작
-  const startEditing=(comment)=>{
+  const startEditing=useCallback((comment)=>{
     setEditingCommentId(comment.id); //이 댓글이 수정중임을 react에 알린다
     setEditingContent(comment.content);
     //수정버튼 누른 댓글이 인풋필드로 바뀌고 기존내용 입력되어있음
-  }
+  },[]);
+
+
+  // 댓글 수정 시 커서를 인풋필드 맨뒤로 가게 하기
+  useEffect(() => {
+  if (editingCommentId && editInputRef.current) { //수정 모드인 댓글 && input 실제 렌더링
+    const input = editInputRef.current;
+    input.focus();
+    // 커서를 맨 뒤로 이동
+    input.setSelectionRange(input.value.length, input.value.length);
+  } //setSelectionRange(start, end) : 문자열 선택인데 끝과 끝이니 선택 영역 없고 문자열 맨뒤로 이동 
+  }, [editingCommentId]); // 수정 모드 id가 바뀔 때마다 실행
 
   //댓글 수정 저장
-  const saveEdit = async (commentId) => {
+  const saveEdit = useCallback(async (commentId) => {
   if (!editingContent.trim()) return alert("댓글 내용을 입력해주세요.");
   try {        //백엔드api호출-> 스프링부트 @PutMapping("/{commentId}") 함수 호출, 가능한 이유는 id다달라서
     await axios.put(`http://localhost:8080/api/comments/${commentId}`, { content: editingContent }); //필드: 수정한 내용
@@ -100,8 +109,11 @@ const BoardDetail = () => {
   } catch (err) {
     console.error(err);
   }
-};
+  },[editingContent,fetchComments]);
 
+  //Hook은 다 if문 위에 있어야돼!!
+  //게시글 없으면 로딩중 뜸
+  if (!post) return <div>로딩 중...</div>;
 
   return (
     /* 게시글 상세보기 */
@@ -129,7 +141,7 @@ const BoardDetail = () => {
           <li key={comment.id}>
             {editingCommentId===comment.id?( //수정시작한 댓글의 id랑 일치하는 id라면
               <> {/* 댓글 수정 */}
-                <input value={editingContent} onChange={(e)=>setEditingContent(e.target.value)}/>
+                <input ref={editInputRef} value={editingContent} onChange={(e)=>setEditingContent(e.target.value)}/>
                 <button onClick={() => saveEdit(comment.id)}>저장</button>
                 <button onClick={() => setEditingCommentId(null)}>취소</button>
               </>

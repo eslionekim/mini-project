@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"; //렌더링 조건마다, 상태변화
+import { useCallback, useEffect, useRef, useState } from "react"; //렌더링 조건마다, 상태변화
 import { useNavigate, useParams } from "react-router-dom"; //페이지이동, id값가져옴
 import axios from "axios"; //백엔드랑 http통신
 
@@ -26,7 +26,7 @@ const BoardEdit = () => {
         .catch(err => console.error(err));
     }, [id]);
 
-    const handleUpdate = async (e) => { // 저장 버튼 (수정 다했을 때)
+    const handleUpdate = useCallback(async (e) => { // 저장 버튼 (수정 다했을 때)
         e.preventDefault(); // 새로 고침 방지
         console.log("handleUpdate 호출됨"); 
 
@@ -59,7 +59,7 @@ const BoardEdit = () => {
         } catch (err) { //실패 시 콘솔에 실패 요인 띄움
         console.error(err);
         }
-    };
+    },[title,author,content,id,navigate]);
 
     
 
